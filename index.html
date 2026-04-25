@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Arab Chat</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -16,7 +16,7 @@
         }
 
         * { font-family: 'Cairo', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; height: 100%; background: #fff; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #fff; overflow: hidden; position: fixed; width: 100%; }
 
         #login-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -37,7 +37,7 @@
         #private-notify { font-size: 22px; cursor: pointer; position: relative; display: none; }
         .notify-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: red; border-radius: 50%; border: 1.5px solid white; }
 
-        #lobby-screen { display: block; height: 100vh; overflow-y: auto; padding-bottom: 60px; }
+        #lobby-screen { display: block; height: 100%; overflow-y: auto; padding-bottom: 80px; }
         
         .section-header { padding: 15px 15px 5px; display: flex; justify-content: space-between; align-items: center; }
         .section-title { font-size: 15px; font-weight: 900; color: #333; border-right: 4px solid var(--wa-action); padding-right: 8px; margin: 0; }
@@ -54,12 +54,20 @@
 
         .del-room-btn { position: absolute; top: 8px; left: 8px; background: rgba(254, 44, 85, 0.9); color: #fff; border: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 10; }
 
-        #chat-screen { display: none; height: 100vh; flex-direction: column; background: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .chat-header { background: var(--wa-green); color: #fff; padding: 12px; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+        /* التعديل لضمان ثبات شاشة الدردشة في الموبايل */
+        #chat-screen { 
+            display: none; 
+            height: 100%; 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            flex-direction: column; 
+            background: #e5ddd5; 
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+        }
+        
+        .chat-header { background: var(--wa-green); color: #fff; padding: 12px; display: flex; align-items: center; gap: 10px; font-weight: 800; flex-shrink: 0; }
         
         #msg-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
 
-        /* التعديلات المطلوبة فقط: شكل الفقاعات والأسماء والصور */
         .msg-row { display: flex; gap: 10px; align-items: flex-end; max-width: 85%; }
         .msg-row.me { align-self: flex-end; flex-direction: row-reverse; }
         
@@ -75,16 +83,24 @@
             font-weight: 600; 
             line-height: 1.4;
             box-shadow: 0 1px 1px rgba(0,0,0,0.15); 
-            border-radius: 18px; /* دائرية بالكامل */
+            border-radius: 18px;
         }
 
         .bubble.me { background: var(--msg-me); color: #000; }
         .bubble.them { background: var(--msg-them); color: #000; }
 
-        /* اسم المستخدم فوق الفقاعة باللون الأسود كما في الصورة */
         .u-name-tag { color: #000; display: block; font-weight: 800; font-size: 13px; margin-bottom: 2px; padding: 0 5px; }
 
-        .input-bar { padding: 8px; display: flex; align-items: center; gap: 8px; background: transparent; }
+        /* تعديل شريط الإدخال لضمان ظهوره دائماً */
+        .input-bar { 
+            padding: 8px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: #f0f0f0; 
+            flex-shrink: 0; 
+            padding-bottom: env(safe-area-inset-bottom, 8px);
+        }
         .input-wrapper { background: #fff; flex: 1; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; min-height: 48px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         #m-in { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; }
         .send-btn { background: var(--wa-action); border: none; width: 48px; height: 48px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -111,41 +127,9 @@
         <button class="btn-p" style="background:var(--wa-action); color:#fff; width: 80%;" onclick="finishLogin()">دخول</button>
     </div>
 
-    <div id="modal-profile" class="modal-overlay">
-        <div class="modal-card">
-            <img id="p-img" src="" style="width:90px; height:90px; border-radius:50%; margin-bottom:10px; border:2px solid var(--wa-action); object-fit: cover;">
-            <div id="p-name" style="font-size:18px; font-weight:900; margin-bottom:15px;">...</div>
-            <div id="my-profile-tools" style="display:none;">
-                <label style="background:#f0f0f0; padding:10px; border-radius:12px; font-size:13px; cursor:pointer; display:block; margin-bottom:10px; font-weight:700;">
-                    🖼️ تغيير صورتي الشخصية
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'profile')">
-                </label>
-            </div>
-            <button id="msg-btn" class="btn-p" style="background:var(--wa-action); color:#fff;" onclick="openPrivateChat()">💬 مراسلة خاصة</button>
-            <button id="block-btn" class="btn-p" style="background:var(--tt-red); color:#fff;" onclick="toggleBlockUser()">🚫 حظر المستخدم</button>
-            <button class="btn-p" style="background:#eee;" onclick="hideModal('modal-profile')">إغلاق</button>
-        </div>
-    </div>
-
-    <div id="modal-inbox" class="modal-overlay">
-        <div class="modal-card">
-            <h3 style="margin-top:0;">الرسائل الواردة</h3>
-            <div id="inbox-list" style="max-height:300px; overflow-y:auto; text-align:right;"></div>
-            <button class="btn-p" style="background:#eee;" onclick="hideModal('modal-inbox')">إغلاق</button>
-        </div>
-    </div>
-
-    <div id="modal-create" class="modal-overlay">
-        <div class="modal-card">
-            <h3>إنشاء غرفة جديدة</h3>
-            <input type="text" id="new-room-name" class="modal-input" placeholder="اسم الغرفة...">
-            <input type="file" accept="image/*" onchange="handleFile(this, 'room')" style="font-size:11px; margin-bottom:10px;">
-            <div style="display:flex; gap:10px;">
-                <button class="btn-p" style="background:var(--wa-action); color:#fff;" onclick="saveNewRoom()">تأكيد</button>
-                <button class="btn-p" style="background:#eee;" onclick="hideModal('modal-create')">إلغاء</button>
-            </div>
-        </div>
-    </div>
+    <div id="modal-profile" class="modal-overlay"><div class="modal-card"><img id="p-img" src="" style="width:90px; height:90px; border-radius:50%; margin-bottom:10px; border:2px solid var(--wa-action); object-fit: cover;"><div id="p-name" style="font-size:18px; font-weight:900; margin-bottom:15px;">...</div><div id="my-profile-tools" style="display:none;"><label style="background:#f0f0f0; padding:10px; border-radius:12px; font-size:13px; cursor:pointer; display:block; margin-bottom:10px; font-weight:700;">🖼️ تغيير صورتي الشخصية<input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'profile')"></label></div><button id="msg-btn" class="btn-p" style="background:var(--wa-action); color:#fff;" onclick="openPrivateChat()">💬 مراسلة خاصة</button><button id="block-btn" class="btn-p" style="background:var(--tt-red); color:#fff;" onclick="toggleBlockUser()">🚫 حظر المستخدم</button><button class="btn-p" style="background:#eee;" onclick="hideModal('modal-profile')">إغلاق</button></div></div>
+    <div id="modal-inbox" class="modal-overlay"><div class="modal-card"><h3 style="margin-top:0;">الرسائل الواردة</h3><div id="inbox-list" style="max-height:300px; overflow-y:auto; text-align:right;"></div><button class="btn-p" style="background:#eee;" onclick="hideModal('modal-inbox')">إغلاق</button></div></div>
+    <div id="modal-create" class="modal-overlay"><div class="modal-card"><h3>إنشاء غرفة جديدة</h3><input type="text" id="new-room-name" class="modal-input" placeholder="اسم الغرفة..."><input type="file" accept="image/*" onchange="handleFile(this, 'room')" style="font-size:11px; margin-bottom:10px;"><div style="display:flex; gap:10px;"><button class="btn-p" style="background:var(--wa-action); color:#fff;" onclick="saveNewRoom()">تأكيد</button><button class="btn-p" style="background:#eee;" onclick="hideModal('modal-create')">إلغاء</button></div></div></div>
 
     <div id="lobby-screen">
         <div class="main-header">
@@ -212,6 +196,25 @@
             document.getElementById('header-user-img').src = myUser.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${myUser.name}`;
             renderPublicRooms(); loadUserRooms();
             initEmojis(); listenPrivates();
+            
+            // إضافة مستمع لزر Enter في الكمبيوتر
+            document.getElementById('m-in').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMsg();
+                }
+            });
+
+            // حل مشكلة لوحة المفاتيح في الموبايل
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    const chatScreen = document.getElementById('chat-screen');
+                    if (chatScreen.style.display === 'flex') {
+                        chatScreen.style.height = window.visualViewport.height + 'px';
+                        const box = document.getElementById('msg-container');
+                        box.scrollTop = box.scrollHeight;
+                    }
+                });
+            }
         }
 
         function initEmojis() {
@@ -299,9 +302,9 @@
 
         function renderPublicRooms() {
             const publics = [
-{ id:'pub_iq', name: 'الدردشة العامة', img: 'https://www.sadairaqchat.com/chat/default_images/og.png' },
-{ id:'pub_comp', name: 'غرفة المسابقات 🏆', img: 'https://it-solutions.center/wp-content/uploads/2023/11/13683697_Tiny-corporative-winners-celebrating-victory-1024x799-1.jpg' }
-];
+                { id:'pub_iq', name: 'الدردشة العامة', img: 'https://www.sadairaqchat.com/chat/default_images/og.png' },
+                { id:'pub_comp', name: 'غرفة المسابقات 🏆', img: 'https://it-solutions.center/wp-content/uploads/2023/11/13683697_Tiny-corporative-winners-celebrating-victory-1024x799-1.jpg' }
+            ];
             const b = document.getElementById('public-rooms'); b.innerHTML = "";
             publics.forEach(r => {
                 b.innerHTML += `<div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
@@ -336,6 +339,12 @@
             currentRoomId = id; document.getElementById('room-title').innerText = name;
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
+            
+            // ضبط الارتفاع للموبايل فور الدخول
+            if (window.visualViewport) {
+                document.getElementById('chat-screen').style.height = window.visualViewport.height + 'px';
+            }
+
             db.ref(`presence/${id}/${myUser.uid}`).set(Date.now());
             db.ref(`presence/${id}/${myUser.uid}`).onDisconnect().remove();
             loadMessages();
@@ -381,7 +390,12 @@
         function logout() { if(confirm("خروج نهائي؟")) { localStorage.clear(); location.reload(); } }
         function showModal(id) { document.getElementById(id).style.display = 'flex'; }
         function hideModal(id) { document.getElementById(id).style.display = 'none'; }
-        function goBack() { currentRoomId = ""; document.getElementById('lobby-screen').style.display = 'block'; document.getElementById('chat-screen').style.display = 'none'; }
+        function goBack() { 
+            currentRoomId = ""; 
+            document.getElementById('lobby-screen').style.display = 'block'; 
+            document.getElementById('chat-screen').style.display = 'none'; 
+            document.getElementById('chat-screen').style.height = '100%';
+        }
         window.onpopstate = goBack;
     </script>
 </body>
