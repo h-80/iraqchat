@@ -73,8 +73,8 @@
         .u-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         
         .bubble-wrapper { display: flex; flex-direction: column; }
-        .msg-row.me .bubble-wrapper { align-items: flex-end; }
-        .msg-row.them .bubble-wrapper { align-items: flex-start; }
+        .msg-row.me { align-items: flex-end; }
+        .msg-row.them { align-items: flex-start; }
 
         .bubble { 
             padding: 10px 16px; 
@@ -112,7 +112,6 @@
 
         #typing-status { font-size: 11px; color: #ffffffcc; font-weight: 400; margin-right: 5px; min-width: 60px; height: 15px; }
         
-        /* تنسيق حاوية الصورة مع أزرار التحكم */
         .img-msg-container { position: relative; display: inline-block; }
         .msg-img { max-width: 200px; border-radius: 10px; cursor: pointer; margin-top: 5px; display: block; transition: 0.3s; }
         .img-action-btn { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
@@ -121,6 +120,9 @@
         #photo-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
         #full-photo { max-width: 95%; max-height: 80%; border-radius: 5px; object-fit: contain; }
         .close-viewer { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; font-weight: bold; }
+
+        /* إضافة تنسيق للرسالة الإدارية */
+        .admin-broadcast { width: 90%; background: rgba(255, 152, 0, 0.1); border: 1.5px dashed #ff9800; color: #ff9800; padding: 10px; border-radius: 12px; text-align: center; font-weight: 900; margin: 10px auto; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -215,6 +217,18 @@
         if(!myUser.name) document.getElementById('login-overlay').style.display = 'flex';
         else setupApp();
 
+        // 1. نظام الحظر المركزي (من لوحة التحكم)
+        function checkGlobalBan() {
+            db.ref('global_bans/' + myUser.uid).on('value', snap => {
+                if(snap.exists()) {
+                    document.body.innerHTML = `<div style="height:100vh; background:#000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family:Cairo; text-align:center; padding:20px;">
+                        <h1 style="color:red; font-size:40px;">🚫 محظور</h1>
+                        <p>عذراً يا ${myUser.name}، لقد تم حظرك نهائياً من قبل الإدارة.</p>
+                    </div>`;
+                }
+            });
+        }
+
         function finishLogin() {
             const n = document.getElementById('login-name').value;
             if(n.trim().length < 2) return alert("الاسم قصير");
@@ -224,17 +238,14 @@
         }
 
         function setupApp() {
+            checkGlobalBan(); // التحقق من الحظر عند التشغيل
             document.getElementById('header-user-img').src = myUser.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${myUser.name}`;
             renderPublicRooms(); loadUserRooms();
             initEmojis(); listenPrivates();
             
             const input = document.getElementById('m-in');
-            input.addEventListener('input', () => { 
-                setTyping(); 
-            });
-            input.addEventListener('keypress', (e) => { 
-                if (e.key === 'Enter') sendMsg(); 
-            });
+            input.addEventListener('input', () => { setTyping(); });
+            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
 
             if (window.visualViewport) {
                 window.visualViewport.addEventListener('resize', () => {
@@ -260,9 +271,7 @@
             if(!currentRoomId) return;
             db.ref(`typing/${currentRoomId}/${myUser.uid}`).set(myUser.name);
             clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
-            }, 2000);
+            typingTimer = setTimeout(() => { db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove(); }, 2000);
         }
 
         function listenTyping() {
@@ -355,6 +364,12 @@
                     const isMe = d.uid === myUser.uid;
                     const msgKey = c.key;
                     
+                    // 2. معالجة الرسائل الإدارية (SYSTEM)
+                    if(d.uid === "SYSTEM") {
+                        box.innerHTML += `<div class="admin-broadcast">${d.m}</div>`;
+                        return;
+                    }
+
                     let content = d.m;
                     if(d.type === 'img') {
                         content = `
@@ -380,33 +395,28 @@
         }
 
         function deleteMsg(key) {
-            if(confirm("هل تريد حذف هذه الصورة؟")) {
-                db.ref(`chats/${currentRoomId}/${key}`).remove();
-            }
+            if(confirm("هل تريد حذف هذه الصورة؟")) { db.ref(`chats/${currentRoomId}/${key}`).remove(); }
         }
 
         function reportImg(key, url) {
             if(confirm("هل تريد التبليغ عن هذه الصورة لمخالفتها القوانين؟")) {
                 db.ref('reports/' + key).push({
-                    reporter: myUser.name,
-                    reporterUid: myUser.uid,
-                    imageContent: url,
-                    roomId: currentRoomId,
-                    timestamp: Date.now()
-                }).then(() => {
-                    alert("تم إرسال التبليغ بنجاح. سنراجع المحتوى قريباً.");
-                });
+                    reporter: myUser.name, reporterUid: myUser.uid, imageContent: url, roomId: currentRoomId, timestamp: Date.now()
+                }).then(() => { alert("تم إرسال التبليغ بنجاح. سنراجع المحتوى قريباً."); });
             }
         }
 
+        // 3. ربط الأقسام الرئيسية بلوحة التحكم
         function renderPublicRooms() {
-            const publics = [{ id:'pub_iq', name: 'الدردشة العامة', img: 'https://www.sadairaqchat.com/chat/default_images/og.png' }, { id:'pub_comp', name: 'غرفة المسابقات 🏆', img: 'https://it-solutions.center/wp-content/uploads/2023/11/13683697_Tiny-corporative-winners-celebrating-victory-1024x799-1.jpg' }];
-            const b = document.getElementById('public-rooms'); b.innerHTML = "";
-            publics.forEach(r => {
-                b.innerHTML += `<div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
-                    <img src="${r.img}" class="room-card-img"><div class="room-card-info"><span class="room-card-name">${r.name}</span><span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span></div>
-                </div>`;
-                trackPresence(r.id);
+            db.ref('public_rooms').on('value', snapshot => {
+                const b = document.getElementById('public-rooms'); b.innerHTML = "";
+                snapshot.forEach(child => {
+                    const r = child.val();
+                    b.innerHTML += `<div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
+                        <img src="${r.img}" class="room-card-img"><div class="room-card-info"><span class="room-card-name">${r.name}</span><span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span></div>
+                    </div>`;
+                    trackPresence(r.id);
+                });
             });
         }
 
