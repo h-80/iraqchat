@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IRAQ Chat</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root { 
+            --wa-green: #075e54; --wa-action: #00a884;
+            --tt-red: #fe2c55; --bg-light-green: #f0f7f4; 
+            --msg-me: #dcf8c6; --msg-them: #ffffff;
+        }
+
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-light-green); overflow: hidden; }
+
+        /* الواجهة الرئيسية */
+        .main-header { position: sticky; top: 0; background: var(--wa-green); color: #fff; padding: 15px; text-align: center; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #lobby-screen { display: block; height: 100vh; overflow-y: auto; padding-bottom: 30px; }
+        .rooms-container { padding: 15px; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 20px 5px 12px; }
+        .section-title { font-size: 16px; font-weight: 800; color: #444; border-right: 4px solid var(--wa-action); padding-right: 10px; margin: 0; }
+        
+        .btn-add-room { background: var(--wa-action); color: #fff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+
+        .room-card { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-right: 6px solid var(--tt-red); box-shadow: 0 4px 12px rgba(0,0,0,0.03); cursor: pointer; height: 85px; }
+        .room-fixed { border-right-color: #2ecc71; background: #f9fffb; }
+        
+        .room-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .room-name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .room-owner { color: #888; font-size: 12px; margin-top: 2px; }
+
+        .online-tag { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+
+        /* شاشة الدردشة */
+        #chat-screen { display: none; height: 100vh; flex-direction: column; background: #e5ddd5; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .chat-header { background: var(--wa-green); color: #fff; padding: 15px; text-align: center; font-weight: 800; position: relative; }
+        #msg-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .msg-row { display: flex; gap: 8px; align-items: flex-end; max-width: 90%; }
+        .msg-row.me { align-self: flex-end; flex-direction: row-reverse; }
+        .u-avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #fff; flex-shrink: 0; cursor: pointer; }
+
+        .bubble { padding: 8px 12px; font-size: 16px; font-weight: 600; border-radius: 15px; position: relative; min-width: 60px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; }
+        .bubble.me { background: var(--msg-me); border-bottom-right-radius: 2px; }
+        .bubble.them { background: var(--msg-them); border-bottom-left-radius: 2px; }
+        
+        .reply-box-preview { background: rgba(0,0,0,0.05); border-right: 3px solid var(--wa-action); padding: 4px 8px; margin-bottom: 5px; font-size: 12px; border-radius: 4px; color: #555; }
+        .msg-time { display: block; font-size: 10px; color: #888; text-align: left; margin-top: 4px; font-weight: 400; }
+        .me .msg-time { text-align: right; }
+        
+        #active-reply-bar { display: none; background: #eee; padding: 8px 15px; border-top: 1px solid #ddd; justify-content: space-between; align-items: center; font-size: 13px; }
+        .input-bar { padding: 10px; display: flex; align-items: center; gap: 8px; background: #f0f0f0; }
+        .input-wrapper { background: #fff; flex: 1; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; min-height: 48px; }
+        #m-in { flex: 1; border: none; outline: none; font-size: 17px; background: transparent; }
+        #typing-indicator { font-size: 12px; color: #075e54; padding: 0 20px; font-weight: 700; height: 20px; background: rgba(255,255,255,0.3); }
+
+        .chat-img { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
+        
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: #fff; width: 100%; max-width: 350px; border-radius: 20px; padding: 25px; text-align: center; }
+        #sticker-panel { display: none; background: #f0f0f0; height: 150px; overflow-y: auto; padding: 10px; grid-template-columns: repeat(5, 1fr); gap: 10px; border-top: 1px solid #ccc; }
+        .sticker-item { font-size: 28px; cursor: pointer; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="modal-create" class="modal-overlay">
+        <div class="modal-card">
+            <h3>إنشاء غرفة جديدة</h3>
+            <input type="text" id="new-room-name-input" style="width:100%; padding:10px; margin:10px 0;" placeholder="اسم الغرفة...">
+            <div style="display:flex; gap:10px;">
+                <button class="btn-add-room" style="flex:1; justify-content:center;" onclick="confirmCreateRoom()">إنشاء</button>
+                <button style="flex:1; border:none; border-radius:20px;" onclick="hideModal('modal-create')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-profile" class="modal-overlay">
+        <div class="modal-card">
+            <img id="p-avatar" src="" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;">
+            <h3 id="p-name" style="margin:5px 0;"></h3>
+            <p id="p-status" style="font-size:14px; color:var(--wa-action);"></p>
+            <div id="p-actions" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+            <button style="width:100%; padding:10px; border:none; border-radius:10px; margin-top:10px; background:#ddd;" onclick="hideModal('modal-profile')">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="lobby-screen">
+        <div class="main-header"><h1 style="margin:0; font-size:22px; font-weight: 900;">IRAQ Chat</h1></div>
+        <div class="rooms-container">
+            <div class="section-header">
+                <h2 class="section-title">غرف الدردشة الرئيسية</h2>
+                <button class="btn-add-room" onclick="showModal('modal-create')">+ إنشاء غرفة</button>
+            </div>
+            <div id="fixed-rooms"></div>
+            <div class="section-header"><h2 class="section-title">غرف المستخدمين</h2></div>
+            <div id="user-rooms"></div>
+        </div>
+    </div>
+
+    <div id="chat-screen">
+        <div class="chat-header">
+            <span onclick="exitChatUI()" style="float:right; cursor:pointer; font-size:20px;">🔙</span>
+            <div id="active-room-name">...</div>
+        </div>
+        <div id="msg-container"></div>
+        <div id="typing-indicator"></div>
+        <div id="active-reply-bar">
+            <span id="reply-text-preview"></span>
+            <span onclick="cancelReply()" style="cursor:pointer; font-weight:900;">✕</span>
+        </div>
+        <div id="sticker-panel">
+            <span class="sticker-item" onclick="appendEmoji('😂')">😂</span>
+            <span class="sticker-item" onclick="appendEmoji('🇮🇶')">🇮🇶</span>
+            <span class="sticker-item" onclick="appendEmoji('😍')">😍</span>
+            <span class="sticker-item" onclick="appendEmoji('🔥')">🔥</span>
+            <span class="sticker-item" onclick="appendEmoji('❤️')">❤️</span>
+            <span class="sticker-item" onclick="appendEmoji('👍')">👍</span>
+            <span class="sticker-item" onclick="appendEmoji('🌹')">🌹</span>
+            <span class="sticker-item" onclick="appendEmoji('✌️')">✌️</span>
+        </div>
+        <div class="input-bar">
+            <div class="input-wrapper">
+                <span onclick="toggleStickers()" style="cursor:pointer; padding-left:10px; font-size: 22px;">😊</span>
+                <input type="text" id="m-in" placeholder="اكتب رسالتك..." oninput="handleTyping()">
+            </div>
+            <button class="btn-send" style="background:var(--wa-action); border:none; border-radius:50%; width:45px; height:45px;" onclick="sendText()">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyCRnIF0BEIvf5axNd7S2CjGn1oBI5Ew4KI", authDomain: "tik-tak-cdfad.firebaseapp.com", projectId: "tik-tak-cdfad", databaseURL: "https://tik-tak-cdfad-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // بيانات المستخدم (يمكن استبدالها ببيانات حقيقية لاحقاً)
+        const myUser = { uid: "HAIDER_123", name: "حيدر الفهام", av: "https://api.dicebear.com/7.x/avataaars/svg?seed=Haider" };
+        let currentRoomId = "", replyData = null, typingTimeout;
+        let blockedUsers = JSON.parse(localStorage.getItem('iraq_blocked_users') || "[]");
+
+        // --- نظام الرجوع للخلف والحفاظ على الحالة ---
+        window.onpopstate = function() {
+            if (currentRoomId) exitChatUI();
+            else history.replaceState({view: 'lobby'}, "");
+        };
+
+        window.onload = () => {
+            listenToRooms();
+            history.replaceState({view: 'lobby'}, "");
+        };
+
+        function setView(view) {
+            document.getElementById('lobby-screen').style.display = view === 'lobby' ? 'block' : 'none';
+            document.getElementById('chat-screen').style.display = view === 'chat' ? 'flex' : 'none';
+            if (view === 'chat') history.pushState({view: 'chat'}, "");
+        }
+        // ------------------------------------------
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // الحظر الشخصي
+        function toggleBlock(uid) {
+            if (blockedUsers.includes(uid)) {
+                blockedUsers = blockedUsers.filter(id => id !== uid);
+                alert("تم فك الحظر.");
+            } else {
+                if(confirm("هل تريد حظر هذا المستخدم؟ لن تظهر لك رسائله.")) {
+                    blockedUsers.push(uid);
+                }
+            }
+            localStorage.setItem('iraq_blocked_users', JSON.stringify(blockedUsers));
+            hideModal('modal-profile');
+            if(currentRoomId) loadMsgs();
+        }
+
+        // التعامل مع الإيموجي (إضافة للصندوق وليس إرسال فوري)
+        function appendEmoji(emoji) {
+            const i = document.getElementById('m-in');
+            i.value += emoji; i.focus();
+        }
+
+        function toggleStickers() { 
+            const s = document.getElementById('sticker-panel'); 
+            s.style.display = (s.style.display==='grid'?'none':'grid'); 
+        }
+
+        // فحص الأمان (روابط وأرقام)
+        function checkSafety(text) {
+            const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+            const phonePattern = /[0-9]{10,}/;
+            if (urlPattern.test(text) || phonePattern.test(text)) {
+                alert("⚠️ يمنع إرسال الروابط أو الأرقام داخل الدردشة."); return false;
+            }
+            return true;
+        }
+
+        function listenToRooms() {
+            const fixed = [{id:'iraq_gen', name:'🇮🇶 شات العراق العام'}];
+            fixed.forEach(r => {
+                document.getElementById('fixed-rooms').innerHTML = `<div class="room-card room-fixed" onclick="joinRoom('${r.id}', '${r.name}')"><div class="room-info"><div class="room-name">${r.name}</div></div><div class="room-actions"><span class="online-tag" id="cnt-${r.id}">0</span></div></div>`;
+                db.ref('presence/'+r.id).on('value', s => { if(document.getElementById('cnt-'+r.id)) document.getElementById('cnt-'+r.id).innerText = s.numChildren() || 0; });
+            });
+            db.ref('rooms_meta').on('value', snap => {
+                const box = document.getElementById('user-rooms'); box.innerHTML = "";
+                snap.forEach(c => {
+                    const r = c.val();
+                    box.innerHTML += `<div class="room-card" onclick="joinRoom('${c.key}', '${r.name}')"><div class="room-info"><div class="room-name">${r.name}</div><div class="room-owner">بواسطة: ${r.creator}</div></div></div>`;
+                });
+            });
+        }
+
+        function joinRoom(id, name) {
+            currentRoomId = id; document.getElementById('active-room-name').innerText = name;
+            db.ref('presence/'+id+'/'+myUser.uid).set({n: myUser.name, st: 'online'});
+            db.ref('presence/'+id+'/'+myUser.uid).onDisconnect().remove();
+            setView('chat'); loadMsgs(); listenTyping();
+        }
+
+        function handleTyping() {
+            db.ref('typing/'+currentRoomId+'/'+myUser.uid).set(true);
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => db.ref('typing/'+currentRoomId+'/'+myUser.uid).remove(), 2000);
+        }
+
+        function listenTyping() {
+            db.ref('typing/'+currentRoomId).on('value', s => {
+                const typers = [];
+                s.forEach(t => { if(t.key !== myUser.uid && !blockedUsers.includes(t.key)) typers.push("شخص يكتب الآن..."); });
+                document.getElementById('typing-indicator').innerText = typers.length > 0 ? typers[0] : "";
+            });
+        }
+
+        function setReply(name, text) {
+            replyData = { name, text };
+            document.getElementById('active-reply-bar').style.display = 'flex';
+            document.getElementById('reply-text-preview').innerText = `الرد على ${name}: ${text.substring(0,15)}...`;
+        }
+
+        function cancelReply() { replyData = null; document.getElementById('active-reply-bar').style.display = 'none'; }
+
+        function sendText() {
+            const i = document.getElementById('m-in');
+            const text = i.value.trim();
+            if(text && currentRoomId && checkSafety(text)) {
+                const msg = { u: myUser.name, uid: myUser.uid, av: myUser.av, m: text, t: Date.now(), type: 'text' };
+                if(replyData) { msg.reply = replyData; cancelReply(); }
+                db.ref('chats/'+currentRoomId).push(msg);
+                i.value = ""; document.getElementById('sticker-panel').style.display = 'none';
+            }
+        }
+
+        function loadMsgs() {
+            db.ref('chats/'+currentRoomId).limitToLast(50).on('value', snap => {
+                const box = document.getElementById('msg-container'); box.innerHTML = "";
+                snap.forEach(c => {
+                    const d = c.val(), isMe = d.uid === myUser.uid;
+                    if (blockedUsers.includes(d.uid)) return; // تصفية المحظورين
+
+                    const time = new Date(d.t).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+                    let content = d.m;
+                    if(d.m.startsWith('http')) {
+                        content = d.m.match(/\.(jpeg|jpg|gif|png)$/) != null ? `<img src="${d.m}" class="chat-img">` : `<a href="${d.m}" target="_blank">${d.m}</a>`;
+                    }
+                    box.innerHTML += `
+                        <div class="msg-row ${isMe?'me':''}">
+                            <img src="${d.av}" class="u-avatar" onclick="showUser('${d.u}','${d.av}', '${d.uid}')">
+                            <div class="bubble ${isMe?'me':'them'}" onclick="setReply('${d.u}','${d.m}')">
+                                ${d.reply ? `<div class="reply-box-preview"><b>${d.reply.name}</b>: ${d.reply.text}</div>` : ''}
+                                ${!isMe ? `<small style="color:var(--wa-green);display:block;font-size:11px">${d.u}</small>` : ''}
+                                ${content}
+                                <span class="msg-time">${time}</span>
+                            </div>
+                        </div>`;
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        function showUser(name, av, uid) {
+            document.getElementById('p-avatar').src = av;
+            document.getElementById('p-name').innerText = name;
+            document.getElementById('p-status').innerText = blockedUsers.includes(uid) ? "محظور 🚫" : "متصل الآن 🟢";
+            const actionBox = document.getElementById('p-actions'); actionBox.innerHTML = "";
+            
+            if(uid !== myUser.uid) {
+                // زر الخاص
+                const pBtn = document.createElement('button');
+                pBtn.innerText = "مراسلة خاصة 💬";
+                pBtn.style = "width:100%; padding:10px; background:var(--wa-action); color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;";
+                pBtn.onclick = () => openPrivateChat(uid, name, av);
+                actionBox.appendChild(pBtn);
+
+                // زر الحظر
+                const bBtn = document.createElement('button');
+                const isB = blockedUsers.includes(uid);
+                bBtn.innerText = isB ? "إلغاء الحظر ✅" : "حظر المستخدم 🚫";
+                bBtn.style = `width:100%; padding:10px; background:${isB?'#2ecc71':var(--tt-red)}; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;`;
+                bBtn.onclick = () => toggleBlock(uid);
+                actionBox.appendChild(bBtn);
+            }
+            showModal('modal-profile');
+        }
+
+        function openPrivateChat(tUid, tName, tAv) {
+            const pId = myUser.uid < tUid ? myUser.uid + "_" + tUid : tUid + "_" + myUser.uid;
+            currentRoomId = "private_" + pId;
+            document.getElementById('active-room-name').innerText = "دردشة خاصة: " + tName;
+            hideModal('modal-profile'); setView('chat'); loadMsgs();
+        }
+
+        function exitChatUI() {
+            if(currentRoomId) { 
+                db.ref('presence/'+currentRoomId+'/'+myUser.uid).remove(); 
+                db.ref('typing/'+currentRoomId+'/'+myUser.uid).remove(); 
+            }
+            currentRoomId = ""; setView('lobby');
+        }
+
+        function confirmCreateRoom() {
+            const name = document.getElementById('new-room-name-input').value;
+            if(name.trim()) { db.ref('rooms_meta').push({ name: name.trim(), creator: myUser.name, uid: myUser.uid }); hideModal('modal-create'); }
+        }
+    </script>
+</body>
+</html>
