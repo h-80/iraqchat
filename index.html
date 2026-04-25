@@ -322,7 +322,6 @@
             hideModal('modal-profile'); enterRoom(`private_${pId}`, `خاص: ${targetUser.name}`);
         }
 
-        // تم إصلاح الخلل هنا لمنع ظهور undefined
         function listenPrivates() {
             db.ref('chats').on('value', snap => {
                 let hasNew = false;
@@ -335,10 +334,9 @@
                         const allMsgs = Object.values(msgs);
                         const lastMsg = allMsgs[allMsgs.length - 1];
                         
-                        // البحث عن أول رسالة تحتوي على اسم صحيح للطرف الآخر
-                        const otherUserMsg = allMsgs.find(m => m.uid !== myUser.uid && m.u && m.u !== "undefined");
+                        // تم تحسين البحث لضمان جلب الاسم الصحيح وتجنب undefined
+                        const otherUserMsg = allMsgs.find(m => m.uid !== myUser.uid && m.u && m.u !== "undefined" && m.u !== "");
                         
-                        // استخراج المعرف للطرف الآخر
                         const otherUid = room.key.replace('private_', '').replace(myUser.uid, '').replace('_', '');
                         
                         if (otherUserMsg && otherUserMsg.u) {
@@ -361,8 +359,8 @@
             list.innerHTML = "";
             for(let id in privateRooms) {
                 const room = privateRooms[id];
-                // تأكد إضافي من عدم عرض أي قسم غير معروف
-                if (!room.name || room.name === "undefined") continue;
+                // شرط إضافي لضمان عدم عرض أي كرت يحتوي على undefined
+                if (!room.name || room.name === "undefined" || room.name === "") continue;
 
                 list.innerHTML += `
                     <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
