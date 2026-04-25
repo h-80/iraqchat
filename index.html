@@ -90,16 +90,15 @@
 
         .u-name-tag { color: #000; display: block; font-weight: 800; font-size: 13px; margin-bottom: 2px; padding: 0 5px; }
 
-        /* تعديل حقل الكتابة لحل مشكلة الاقتصاص في الموبايل */
+        /* التعديل لرفع حقل الكتابة */
         .input-bar { 
-            padding: 10px 8px 15px 8px; /* بادينج سفلي متوازن */
+            padding: 10px 10px 30px 10px; 
             display: flex; 
             align-items: center; 
             gap: 8px; 
             background: #f0f0f0; 
             flex-shrink: 0; 
-            /* السطر التالي يضمن رفع الحقل فوق شريط الموبايل السفلي */
-            padding-bottom: max(12px, env(safe-area-inset-bottom)); 
+            padding-bottom: max(30px, env(safe-area-inset-bottom)); 
         }
         .input-wrapper { background: #fff; flex: 1; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; min-height: 48px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         #m-in { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; }
@@ -139,6 +138,7 @@
                 <img id="header-user-img" src="" class="user-mini-img" onclick="viewProfile(myUser.name, myUser.uid, myUser.img)" title="ملفي الشخصي">
             </div>
         </div>
+        
         <div class="section-header">
             <h2 class="section-title">الغرف العامة</h2>
             <div class="lobby-btns">
@@ -196,12 +196,10 @@
             renderPublicRooms(); loadUserRooms();
             initEmojis(); listenPrivates();
             
-            // مستمع Enter للكمبيوتر
             document.getElementById('m-in').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') { sendMsg(); }
             });
 
-            // معالجة لوحة مفاتيح الموبايل
             if (window.visualViewport) {
                 window.visualViewport.addEventListener('resize', () => {
                     const chatScreen = document.getElementById('chat-screen');
