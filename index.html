@@ -121,7 +121,6 @@
         #full-photo { max-width: 95%; max-height: 80%; border-radius: 5px; object-fit: contain; }
         .close-viewer { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; font-weight: bold; }
 
-        /* إضافة تنسيق للرسالة الإدارية */
         .admin-broadcast { width: 90%; background: rgba(255, 152, 0, 0.1); border: 1.5px dashed #ff9800; color: #ff9800; padding: 10px; border-radius: 12px; text-align: center; font-weight: 900; margin: 10px auto; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -217,7 +216,6 @@
         if(!myUser.name) document.getElementById('login-overlay').style.display = 'flex';
         else setupApp();
 
-        // 1. نظام الحظر المركزي (من لوحة التحكم)
         function checkGlobalBan() {
             db.ref('global_bans/' + myUser.uid).on('value', snap => {
                 if(snap.exists()) {
@@ -238,7 +236,7 @@
         }
 
         function setupApp() {
-            checkGlobalBan(); // التحقق من الحظر عند التشغيل
+            checkGlobalBan();
             document.getElementById('header-user-img').src = myUser.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${myUser.name}`;
             renderPublicRooms(); loadUserRooms();
             initEmojis(); listenPrivates();
@@ -324,19 +322,36 @@
             hideModal('modal-profile'); enterRoom(`private_${pId}`, `خاص: ${targetUser.name}`);
         }
 
+        // تم إصلاح الخلل هنا لمنع ظهور undefined
         function listenPrivates() {
             db.ref('chats').on('value', snap => {
                 let hasNew = false;
+                let newPrivateRooms = {}; 
                 snap.forEach(room => {
                     if(room.key.startsWith('private_') && room.key.includes(myUser.uid)) {
                         const msgs = room.val();
-                        const lastMsg = Object.values(msgs).pop();
-                        if(lastMsg && lastMsg.uid !== myUser.uid) {
-                            privateRooms[lastMsg.uid] = { name: lastMsg.u, img: lastMsg.img, rid: room.key };
-                            if(currentRoomId !== room.key) hasNew = true;
+                        if (!msgs) return;
+                        
+                        const allMsgs = Object.values(msgs);
+                        const lastMsg = allMsgs[allMsgs.length - 1];
+                        
+                        // البحث عن أول رسالة تحتوي على اسم صحيح للطرف الآخر
+                        const otherUserMsg = allMsgs.find(m => m.uid !== myUser.uid && m.u && m.u !== "undefined");
+                        
+                        // استخراج المعرف للطرف الآخر
+                        const otherUid = room.key.replace('private_', '').replace(myUser.uid, '').replace('_', '');
+                        
+                        if (otherUserMsg && otherUserMsg.u) {
+                            newPrivateRooms[otherUid] = { 
+                                name: otherUserMsg.u, 
+                                img: otherUserMsg.img || "", 
+                                rid: room.key 
+                            };
+                            if(lastMsg && lastMsg.uid !== myUser.uid && currentRoomId !== room.key) hasNew = true;
                         }
                     }
                 });
+                privateRooms = newPrivateRooms;
                 document.getElementById('dot-indicator').style.display = hasNew ? 'block' : 'none';
             });
         }
@@ -346,17 +361,23 @@
             list.innerHTML = "";
             for(let id in privateRooms) {
                 const room = privateRooms[id];
+                // تأكد إضافي من عدم عرض أي قسم غير معروف
+                if (!room.name || room.name === "undefined") continue;
+
                 list.innerHTML += `
-                    <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" onclick="enterRoom('${room.rid}', 'خاص: ${room.name}'); hideModal('modal-inbox');">
-                        <img src="${room.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+room.name}" style="width:40px; height:40px; border-radius:50%;">
+                    <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
+                         onclick="enterRoom('${room.rid}', '${room.name}'); hideModal('modal-inbox');">
+                        <img src="${room.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+room.name}" 
+                             style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
                         <div style="font-weight:700;">${room.name}</div>
                     </div>`;
             }
-            if(list.innerHTML === "") list.innerHTML = "<p style='text-align:center;color:#888;'>لا توجد رسائل</p>";
+            if(list.innerHTML === "") list.innerHTML = "<p style='text-align:center;color:#888;padding:20px;'>لا توجد رسائل خاصة</p>";
             showModal('modal-inbox');
         }
 
         function loadMessages() {
+            db.ref('chats/'+currentRoomId).off();
             db.ref('chats/'+currentRoomId).limitToLast(50).on('value', snap => {
                 const box = document.getElementById('msg-container'); box.innerHTML = "";
                 snap.forEach(c => {
@@ -364,7 +385,6 @@
                     const isMe = d.uid === myUser.uid;
                     const msgKey = c.key;
                     
-                    // 2. معالجة الرسائل الإدارية (SYSTEM)
                     if(d.uid === "SYSTEM") {
                         box.innerHTML += `<div class="admin-broadcast">${d.m}</div>`;
                         return;
@@ -376,14 +396,15 @@
                             <div class="img-msg-container">
                                 ${isMe ? 
                                     `<button class="img-action-btn" onclick="deleteMsg('${msgKey}')">🗑️</button>` : 
-                                    `<button class="img-action-btn report-btn" onclick="reportImg('${msgKey}', '${d.m}')" title="تبليغ">⚠️</button>`
+                                    `<button class="img-action-btn report-btn" onclick="reportImg('${msgKey}', '${d.m}')">⚠️</button>`
                                 }
                                 <img src="${d.m}" class="msg-img" onclick="openPhoto('${d.m}')">
                             </div>`;
                     }
 
                     box.innerHTML += `<div class="msg-row ${isMe?'me':''}">
-                        <img src="${d.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+d.u}" class="u-avatar" onclick="viewProfile('${d.u}','${d.uid}', '${d.img || ""}')">
+                        <img src="${d.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+d.u}" class="u-avatar" 
+                             onclick="viewProfile('${d.u}','${d.uid}', '${d.img || ""}')">
                         <div class="bubble-wrapper">
                             ${!isMe ? `<span class="u-name-tag">${d.u}</span>` : ''}
                             <div class="bubble ${isMe?'me':'them'}">${content}</div>
@@ -399,14 +420,13 @@
         }
 
         function reportImg(key, url) {
-            if(confirm("هل تريد التبليغ عن هذه الصورة لمخالفتها القوانين؟")) {
+            if(confirm("هل تريد التبليغ عن هذه الصورة؟")) {
                 db.ref('reports/' + key).push({
                     reporter: myUser.name, reporterUid: myUser.uid, imageContent: url, roomId: currentRoomId, timestamp: Date.now()
-                }).then(() => { alert("تم إرسال التبليغ بنجاح. سنراجع المحتوى قريباً."); });
+                }).then(() => { alert("تم التبليغ بنجاح."); });
             }
         }
 
-        // 3. ربط الأقسام الرئيسية بلوحة التحكم
         function renderPublicRooms() {
             db.ref('public_rooms').on('value', snapshot => {
                 const b = document.getElementById('public-rooms'); b.innerHTML = "";
@@ -427,7 +447,7 @@
                 roomsArr.sort((a, b) => (b.last_active || 0) - (a.last_active || 0));
                 uBox.innerHTML = roomsArr.map(r => `
                     <div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
-                        ${r.uid === myUser.uid ? `<button class="del-room-btn" onclick="deleteRoom(event, '${r.id}')">🗑️</button>` : ''}
+                        ${r.uid === myUser.uid ? `<button class="del-room-btn" onclick="event.stopPropagation(); deleteRoom(event, '${r.id}')">🗑️</button>` : ''}
                         <img src="${r.img}" class="room-card-img"><div class="room-card-info"><span class="room-card-name">${r.name}</span><span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span></div>
                     </div>`).join('');
                 roomsArr.forEach(r => trackPresence(r.id));
