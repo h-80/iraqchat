@@ -20,9 +20,35 @@
 
         #login-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--wa-green); z-index: 9999; display: none; 
+            background: linear-gradient(160deg, #075e54 0%, #128c7e 60%, #00a884 100%);
+            z-index: 9999; display: none; 
             flex-direction: column; align-items: center; justify-content: center; color: white;
         }
+        #login-overlay::before {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            top: -80px; left: -80px;
+            pointer-events: none;
+        }
+        #login-overlay::after {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            bottom: -40px; right: -40px;
+            pointer-events: none;
+        }
+        #login-overlay .modal-input {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 15px;
+        }
+        #login-overlay .modal-input::placeholder { color: rgba(255,255,255,0.6); }
 
         .main-header { 
             position: sticky; top: 0; background: var(--wa-green); color: #fff; 
@@ -127,15 +153,29 @@
 <body>
 
     <div id="login-overlay">
-        <h2 style="font-weight: 900;">Arab Chat</h2>
-        <div style="position: relative; margin: 20px 0;">
-            <img id="login-preview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid white; object-fit: cover;">
-            <label style="position: absolute; bottom: 0; right: 0; background: var(--wa-action); padding: 5px; border-radius: 50%; cursor: pointer;">
-                📸 <input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'login')">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style="margin-bottom:6px;" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="26" fill="rgba(255,255,255,0.15)"/>
+            <path d="M14 20.5C14 19.12 15.12 18 16.5 18H19l2-3h10l2 3h2.5C36.88 18 38 19.12 38 20.5V33c0 1.38-1.12 2.5-2.5 2.5h-19C15.12 35.5 14 34.38 14 33V20.5z" stroke="white" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+            <circle cx="26" cy="27" r="4.5" stroke="white" stroke-width="1.8" fill="none"/>
+            <circle cx="33.5" cy="21.5" r="1.2" fill="white"/>
+        </svg>
+        <h2 style="font-weight: 900; margin: 0 0 4px;">Arab Chat</h2>
+        <p style="margin: 0 0 20px; font-size: 13px; opacity: 0.75; font-weight: 400;">أضف صورتك واختر اسمك</p>
+        <div style="position: relative; margin: 0 0 20px;">
+            <img id="login-preview" src="https://api.dicebear.com/7.x/lorelei/svg?seed=user&backgroundColor=b6e3f4" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid white; object-fit: cover; background:#fff;">
+            <label style="position: absolute; bottom: 0; right: 0; background: var(--wa-action); width:32px; height:32px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center; border:2px solid white;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/>
+                    <circle cx="12" cy="13" r="4" stroke="white" stroke-width="2" fill="none"/>
+                </svg>
+                <input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'login')">
             </label>
         </div>
         <input type="text" id="login-name" class="modal-input" placeholder="اكتب اسمك المستعار..." style="width: 80%;">
-        <button class="btn-p" style="background:var(--wa-action); color:#fff; width: 80%;" onclick="finishLogin()">دخول</button>
+        <button class="btn-p" style="background:var(--wa-action); color:#fff; width: 80%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="finishLogin()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            دخول
+        </button>
     </div>
 
     <div id="photo-viewer" onclick="closePhoto()">
@@ -148,12 +188,28 @@
             <img id="p-img" src="" style="width:90px; height:90px; border-radius:50%; margin-bottom:10px; border:2px solid var(--wa-action); object-fit: cover;">
             <div id="p-name" style="font-size:18px; font-weight:900; margin-bottom:15px;">...</div>
             <div id="my-profile-tools" style="display:none;">
-                <label style="background:#f0f0f0; padding:10px; border-radius:12px; font-size:13px; cursor:pointer; display:block; margin-bottom:10px; font-weight:700;">📸 تغيير صورتي الشخصية<input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'profile')"></label>
+                <label style="background:#f0f0f0; padding:10px; border-radius:12px; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; font-weight:700;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#555" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="12" cy="13" r="4" stroke="#555" stroke-width="2" fill="none"/></svg>
+                    تغيير صورتي الشخصية
+                    <input type="file" accept="image/*" style="display:none;" onchange="handleFile(this, 'profile')">
+                </label>
             </div>
-            <button id="reply-btn" class="btn-p" style="background:#007bff; color:#fff;" onclick="fastReply()">↩️ رد سريع</button>
-            <button id="msg-btn" class="btn-p" style="background:var(--wa-action); color:#fff;" onclick="openPrivateChat()">💬 مراسلة خاصة</button>
-            <button id="block-btn" class="btn-p" style="background:var(--tt-red); color:#fff;" onclick="toggleBlockUser()">🚫 حظر المستخدم</button>
-            <button class="btn-p" style="background:#eee;" onclick="hideModal('modal-profile')">إغلاق</button>
+            <button id="reply-btn" class="btn-p" style="background:#007bff; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="fastReply()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><polyline points="9 17 4 12 9 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 18v-2a4 4 0 0 0-4-4H4" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                رد سريع
+            </button>
+            <button id="msg-btn" class="btn-p" style="background:var(--wa-action); color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openPrivateChat()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/></svg>
+                مراسلة خاصة
+            </button>
+            <button id="block-btn" class="btn-p" style="background:var(--tt-red); color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="toggleBlockUser()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                حظر المستخدم
+            </button>
+            <button class="btn-p" style="background:#eee; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="hideModal('modal-profile')">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="#555" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="#555" stroke-width="2" stroke-linecap="round"/></svg>
+                إغلاق
+            </button>
         </div>
     </div>
 
@@ -164,7 +220,13 @@
         <div class="main-header">
             <span class="header-logo">Arab Chat</span>
             <div class="header-actions">
-                <div id="private-notify" onclick="openInbox()">📩<span class="notify-dot" id="dot-indicator"></span></div>
+                <div id="private-notify" onclick="openInbox()" style="display:flex; align-items:center; justify-content:center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="white" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                        <polyline points="22,6 12,13 2,6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="notify-dot" id="dot-indicator"></span>
+                </div>
                 <img id="header-user-img" src="" class="user-mini-img" onclick="viewProfile(myUser.name, myUser.uid, myUser.img)" title="ملفي الشخصي">
             </div>
         </div>
@@ -182,21 +244,29 @@
 
     <div id="chat-screen">
         <div class="chat-header">
-            <span onclick="goBack()" style="cursor:pointer; font-size:22px;">➡️</span>
+            <span onclick="goBack()" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.15); flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><polyline points="9 18 15 12 9 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
             <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
                 <div id="room-title" style="font-size:15px;">...</div>
-                <div id="typing-status"></div> </div>
+                <div id="typing-status"></div>
+            </div>
         </div>
         <div id="msg-container"></div>
         <div id="sticker-panel"></div>
         <div class="input-bar">
             <div class="input-wrapper">
-                <span id="emoji-btn" style="cursor:pointer; font-size:22px; margin-left:8px;">😊</span>
-                <label style="cursor:pointer; font-size:20px; margin-left:8px;">🖼️<input type="file" accept="image/*" style="display:none;" onchange="sendPhoto(this)"></label>
+                <span id="emoji-btn" style="cursor:pointer; margin-left:8px; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#f5f5f5;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#888" stroke-width="1.8"/><path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#888" stroke-width="1.8" stroke-linecap="round"/><line x1="9" y1="9" x2="9.01" y2="9" stroke="#888" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></svg>
+                </span>
+                <label style="cursor:pointer; margin-left:8px; display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#f5f5f5;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#888" stroke-width="1.8" fill="none"/><circle cx="8.5" cy="8.5" r="1.5" fill="#888"/><polyline points="21,15 16,10 5,21" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <input type="file" accept="image/*" style="display:none;" onchange="sendPhoto(this)">
+                </label>
                 <input type="text" id="m-in" placeholder="رسالة..." autocomplete="off">
             </div>
             <button class="send-btn" onclick="sendMsg()">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
             </button>
         </div>
     </div>
@@ -213,12 +283,27 @@
         let privateRooms = {};
         let typingTimer;
 
-        if(!myUser.name) document.getElementById('login-overlay').style.display = 'flex';
-        else setupApp();
+        // إصلاح 1: حفظ uid فوراً عند الإنشاء لتجنب تغييره عند إعادة التحميل
+        if (!localStorage.getItem('iraq_uid')) {
+            localStorage.setItem('iraq_uid', myUser.uid);
+        }
+
+        if (!myUser.name) {
+            document.getElementById('login-overlay').style.display = 'flex';
+        } else {
+            setupApp();
+        }
+
+        function avatarUrl(seed, imgOverride) {
+            if (imgOverride && imgOverride !== '') return imgOverride;
+            const colors = ['b6e3f4','c0aede','d1d4f9','ffd5dc','ffdfbf','c1f0c1','fce4a8'];
+            const bg = colors[Math.abs((seed || '').charCodeAt(0) || 0) % colors.length];
+            return `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed || 'user')}&backgroundColor=${bg}`;
+        }
 
         function checkGlobalBan() {
             db.ref('global_bans/' + myUser.uid).on('value', snap => {
-                if(snap.exists()) {
+                if (snap.exists()) {
                     document.body.innerHTML = `<div style="height:100vh; background:#000; color:white; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family:Cairo; text-align:center; padding:20px;">
                         <h1 style="color:red; font-size:40px;">🚫 محظور</h1>
                         <p>عذراً يا ${myUser.name}، لقد تم حظرك نهائياً من قبل الإدارة.</p>
@@ -229,18 +314,24 @@
 
         function finishLogin() {
             const n = document.getElementById('login-name').value;
-            if(n.trim().length < 2) return alert("الاسم قصير");
-            myUser.name = n; localStorage.setItem('iraq_name', n); localStorage.setItem('iraq_uid', myUser.uid);
+            if (n.trim().length < 2) return alert("الاسم قصير");
+            myUser.name = n;
+            localStorage.setItem('iraq_name', n);
+            localStorage.setItem('iraq_uid', myUser.uid);
             document.getElementById('login-overlay').style.display = 'none';
             setupApp();
         }
 
         function setupApp() {
             checkGlobalBan();
-            document.getElementById('header-user-img').src = myUser.img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${myUser.name}`;
-            renderPublicRooms(); loadUserRooms();
-            initEmojis(); listenPrivates();
-            
+            const bgColors = ['b6e3f4','c0aede','d1d4f9','ffd5dc','ffdfbf'];
+            const pickedBg = bgColors[Math.abs((myUser.name.charCodeAt(0)||0)) % bgColors.length];
+            document.getElementById('header-user-img').src = myUser.img || `https://api.dicebear.com/7.x/lorelei/svg?seed=${myUser.name}&backgroundColor=${pickedBg}`;
+            renderPublicRooms();
+            loadUserRooms();
+            initEmojis();
+            listenPrivates();
+
             const input = document.getElementById('m-in');
             input.addEventListener('input', () => { setTyping(); });
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
@@ -266,16 +357,18 @@
         }
 
         function setTyping() {
-            if(!currentRoomId) return;
+            if (!currentRoomId) return;
             db.ref(`typing/${currentRoomId}/${myUser.uid}`).set(myUser.name);
             clearTimeout(typingTimer);
             typingTimer = setTimeout(() => { db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove(); }, 2000);
         }
 
         function listenTyping() {
+            // إصلاح 2: إيقاف listener القديم قبل إضافة جديد لتجنب التكرار
+            db.ref(`typing/${currentRoomId}`).off();
             db.ref(`typing/${currentRoomId}`).on('value', s => {
                 let typers = [];
-                s.forEach(t => { if(t.key !== myUser.uid) typers.push(t.val()); });
+                s.forEach(t => { if (t.key !== myUser.uid) typers.push(t.val()); });
                 document.getElementById('typing-status').innerText = typers.length > 0 ? typers[0] + " يكتب الآن..." : "";
             });
         }
@@ -283,26 +376,34 @@
         function initEmojis() {
             const p = document.getElementById('sticker-panel');
             p.innerHTML = myEmojis.map(e => `<span style="font-size:24px; cursor:pointer;" onclick="addEmoji('${e}')">${e}</span>`).join('');
-            document.getElementById('emoji-btn').onclick = () => { p.style.display = p.style.display === 'grid' ? 'none' : 'grid'; };
+            document.getElementById('emoji-btn').onclick = () => {
+                p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+            };
         }
         function addEmoji(e) { document.getElementById('m-in').value += e; }
 
         function viewProfile(name, uid, img) {
             targetUser = { name, uid, img };
             document.getElementById('p-name').innerText = name;
-            document.getElementById('p-img').src = img || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+            document.getElementById('p-img').src = img || avatarUrl(name, '');
             const isMe = uid === myUser.uid;
             document.getElementById('my-profile-tools').style.display = isMe ? 'block' : 'none';
             document.getElementById('msg-btn').style.display = isMe ? 'none' : 'block';
             document.getElementById('block-btn').style.display = isMe ? 'none' : 'block';
             const isInChat = document.getElementById('chat-screen').style.display === 'flex';
             document.getElementById('reply-btn').style.display = (isInChat && !isMe) ? 'block' : 'none';
-            if(!isMe) document.getElementById('block-btn').innerText = blockedList.includes(uid) ? "🔓 إلغاء الحظر" : "🚫 حظر المستخدم";
+            if (!isMe) {
+                const isBlocked = blockedList.includes(uid);
+                const blockBtn = document.getElementById('block-btn');
+                blockBtn.innerHTML = isBlocked
+                    ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-left:6px;"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><line x1="8" y1="12" x2="16" y2="12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg> إلغاء الحظر`
+                    : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-left:6px;"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" stroke="white" stroke-width="2" stroke-linecap="round"/></svg> حظر المستخدم`;
+            }
             showModal('modal-profile');
         }
 
         function fastReply() {
-            if(targetUser) {
+            if (targetUser) {
                 const input = document.getElementById('m-in');
                 input.value = `@${targetUser.name} `;
                 hideModal('modal-profile');
@@ -311,41 +412,51 @@
         }
 
         function toggleBlockUser() {
-            if(blockedList.includes(targetUser.uid)) blockedList = blockedList.filter(id => id !== targetUser.uid);
-            else blockedList.push(targetUser.uid);
+            if (blockedList.includes(targetUser.uid)) {
+                blockedList = blockedList.filter(id => id !== targetUser.uid);
+            } else {
+                blockedList.push(targetUser.uid);
+            }
             localStorage.setItem('iraq_blocked_users', JSON.stringify(blockedList));
-            hideModal('modal-profile'); loadMessages();
+            hideModal('modal-profile');
+            loadMessages();
         }
 
         function openPrivateChat() {
-            const pId = myUser.uid < targetUser.uid ? `${myUser.uid}_${targetUser.uid}` : `${targetUser.uid}_${myUser.uid}`;
-            hideModal('modal-profile'); enterRoom(`private_${pId}`, `خاص: ${targetUser.name}`);
+            // إصلاح 3: ترتيب UIDs بشكل صحيح وثابت لضمان نفس ID للغرفة الخاصة
+            const ids = [myUser.uid, targetUser.uid].sort();
+            const pId = `${ids[0]}_${ids[1]}`;
+            hideModal('modal-profile');
+            enterRoom(`private_${pId}`, `خاص: ${targetUser.name}`);
         }
 
         function listenPrivates() {
             db.ref('chats').on('value', snap => {
                 let hasNew = false;
-                let newPrivateRooms = {}; 
+                let newPrivateRooms = {};
                 snap.forEach(room => {
-                    if(room.key.startsWith('private_') && room.key.includes(myUser.uid)) {
+                    if (room.key.startsWith('private_') && room.key.includes(myUser.uid)) {
                         const msgs = room.val();
                         if (!msgs) return;
-                        
+
                         const allMsgs = Object.values(msgs);
                         const lastMsg = allMsgs[allMsgs.length - 1];
-                        
-                        // تم تحسين البحث لضمان جلب الاسم الصحيح وتجنب undefined
-                        const otherUserMsg = allMsgs.find(m => m.uid !== myUser.uid && m.u && m.u !== "undefined" && m.u !== "");
-                        
-                        const otherUid = room.key.replace('private_', '').replace(myUser.uid, '').replace('_', '');
-                        
+
+                        // إصلاح 4: استخراج otherUid بشكل صحيح من مفتاح الغرفة
+                        const idsInKey = room.key.replace('private_', '').split('_');
+                        const otherUid = idsInKey.find(id => id !== myUser.uid);
+
+                        if (!otherUid) return;
+
+                        const otherUserMsg = allMsgs.find(m => m.uid === otherUid && m.u && m.u !== "undefined" && m.u !== "");
+
                         if (otherUserMsg && otherUserMsg.u) {
-                            newPrivateRooms[otherUid] = { 
-                                name: otherUserMsg.u, 
-                                img: otherUserMsg.img || "", 
-                                rid: room.key 
+                            newPrivateRooms[otherUid] = {
+                                name: otherUserMsg.u,
+                                img: otherUserMsg.img || "",
+                                rid: room.key
                             };
-                            if(lastMsg && lastMsg.uid !== myUser.uid && currentRoomId !== room.key) hasNew = true;
+                            if (lastMsg && lastMsg.uid !== myUser.uid && currentRoomId !== room.key) hasNew = true;
                         }
                     }
                 });
@@ -357,55 +468,72 @@
         function openInbox() {
             const list = document.getElementById('inbox-list');
             list.innerHTML = "";
-            for(let id in privateRooms) {
+            for (let id in privateRooms) {
                 const room = privateRooms[id];
-                // شرط إضافي لضمان عدم عرض أي كرت يحتوي على undefined
                 if (!room.name || room.name === "undefined" || room.name === "") continue;
 
-                list.innerHTML += `
-                    <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;" 
-                         onclick="enterRoom('${room.rid}', '${room.name}'); hideModal('modal-inbox');">
-                        <img src="${room.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+room.name}" 
-                             style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-                        <div style="font-weight:700;">${room.name}</div>
-                    </div>`;
+                // إصلاح 5: استخدام data attributes بدلاً من inline onclick لتجنب مشاكل الـ escaping في الأسماء
+                const div = document.createElement('div');
+                div.style.cssText = "display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;";
+                div.innerHTML = `
+                    <img src="${avatarUrl(room.name, room.img)}" 
+                         style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                    <div style="font-weight:700;">${room.name}</div>`;
+                div.addEventListener('click', () => {
+                    enterRoom(room.rid, room.name);
+                    hideModal('modal-inbox');
+                });
+                list.appendChild(div);
             }
-            if(list.innerHTML === "") list.innerHTML = "<p style='text-align:center;color:#888;padding:20px;'>لا توجد رسائل خاصة</p>";
+            if (list.innerHTML === "") list.innerHTML = "<p style='text-align:center;color:#888;padding:20px;'>لا توجد رسائل خاصة</p>";
             showModal('modal-inbox');
         }
 
         function loadMessages() {
-            db.ref('chats/'+currentRoomId).off();
-            db.ref('chats/'+currentRoomId).limitToLast(50).on('value', snap => {
-                const box = document.getElementById('msg-container'); box.innerHTML = "";
+            // إصلاح 6: إيقاف listener القديم بشكل صحيح قبل فتح غرفة جديدة
+            db.ref('chats/' + currentRoomId).off();
+            db.ref('chats/' + currentRoomId).limitToLast(50).on('value', snap => {
+                const box = document.getElementById('msg-container');
+                box.innerHTML = "";
                 snap.forEach(c => {
-                    const d = c.val(); if(blockedList.includes(d.uid)) return;
+                    const d = c.val();
+                    if (!d) return;
+                    if (blockedList.includes(d.uid)) return;
                     const isMe = d.uid === myUser.uid;
                     const msgKey = c.key;
-                    
-                    if(d.uid === "SYSTEM") {
+
+                    if (d.uid === "SYSTEM") {
                         box.innerHTML += `<div class="admin-broadcast">${d.m}</div>`;
                         return;
                     }
 
-                    let content = d.m;
-                    if(d.type === 'img') {
+                    // إصلاح 7: تنظيف النصوص لتجنب XSS عند عرض أسماء المستخدمين في HTML
+                    const safeName = (d.u || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const safeImg = (d.img || '').replace(/'/g, "\\'");
+
+                    let content = '';
+                    if (d.type === 'img') {
                         content = `
                             <div class="img-msg-container">
-                                ${isMe ? 
-                                    `<button class="img-action-btn" onclick="deleteMsg('${msgKey}')">🗑️</button>` : 
-                                    `<button class="img-action-btn report-btn" onclick="reportImg('${msgKey}', '${d.m}')">⚠️</button>`
+                                ${isMe ?
+                                    `<button class="img-action-btn" onclick="deleteMsg('${msgKey}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="white" stroke-width="2.2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg></button>` :
+                                    `<button class="img-action-btn report-btn" onclick="reportImg('${msgKey}', this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></button>`
                                 }
                                 <img src="${d.m}" class="msg-img" onclick="openPhoto('${d.m}')">
                             </div>`;
+                    } else {
+                        // إصلاح 8: عرض النص كـ textContent لتجنب XSS
+                        const tempSpan = document.createElement('span');
+                        tempSpan.textContent = d.m;
+                        content = tempSpan.innerHTML;
                     }
 
-                    box.innerHTML += `<div class="msg-row ${isMe?'me':''}">
-                        <img src="${d.img || 'https://api.dicebear.com/7.x/avataaars/svg?seed='+d.u}" class="u-avatar" 
-                             onclick="viewProfile('${d.u}','${d.uid}', '${d.img || ""}')">
+                    box.innerHTML += `<div class="msg-row ${isMe ? 'me' : ''}">
+                        <img src="${avatarUrl(d.u || '', safeImg)}" class="u-avatar" 
+                             onclick="viewProfile('${safeName}','${d.uid}', '${safeImg}')">
                         <div class="bubble-wrapper">
-                            ${!isMe ? `<span class="u-name-tag">${d.u}</span>` : ''}
-                            <div class="bubble ${isMe?'me':'them'}">${content}</div>
+                            ${!isMe ? `<span class="u-name-tag">${d.u || ''}</span>` : ''}
+                            <div class="bubble ${isMe ? 'me' : 'them'}">${content}</div>
                         </div>
                     </div>`;
                 });
@@ -414,11 +542,16 @@
         }
 
         function deleteMsg(key) {
-            if(confirm("هل تريد حذف هذه الصورة؟")) { db.ref(`chats/${currentRoomId}/${key}`).remove(); }
+            if (confirm("هل تريد حذف هذه الصورة؟")) {
+                db.ref(`chats/${currentRoomId}/${key}`).remove();
+            }
         }
 
-        function reportImg(key, url) {
-            if(confirm("هل تريد التبليغ عن هذه الصورة؟")) {
+        // إصلاح 9: تمرير الزر بدلاً من URL مباشرة لتجنب مشاكل الـ escaping
+        function reportImg(key, btnEl) {
+            const imgEl = btnEl.closest('.img-msg-container').querySelector('.msg-img');
+            const url = imgEl ? imgEl.src : '';
+            if (confirm("هل تريد التبليغ عن هذه الصورة؟")) {
                 db.ref('reports/' + key).push({
                     reporter: myUser.name, reporterUid: myUser.uid, imageContent: url, roomId: currentRoomId, timestamp: Date.now()
                 }).then(() => { alert("تم التبليغ بنجاح."); });
@@ -427,11 +560,16 @@
 
         function renderPublicRooms() {
             db.ref('public_rooms').on('value', snapshot => {
-                const b = document.getElementById('public-rooms'); b.innerHTML = "";
+                const b = document.getElementById('public-rooms');
+                b.innerHTML = "";
                 snapshot.forEach(child => {
                     const r = child.val();
                     b.innerHTML += `<div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
-                        <img src="${r.img}" class="room-card-img"><div class="room-card-info"><span class="room-card-name">${r.name}</span><span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span></div>
+                        <img src="${r.img}" class="room-card-img">
+                        <div class="room-card-info">
+                            <span class="room-card-name">${r.name}</span>
+                            <span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span>
+                        </div>
                     </div>`;
                     trackPresence(r.id);
                 });
@@ -441,13 +579,19 @@
         function loadUserRooms() {
             db.ref('rooms_meta').on('value', snap => {
                 const uBox = document.getElementById('user-rooms');
-                let roomsArr = []; snap.forEach(c => { let r = c.val(); r.id = c.key; roomsArr.push(r); });
+                let roomsArr = [];
+                snap.forEach(c => { let r = c.val(); r.id = c.key; roomsArr.push(r); });
                 roomsArr.sort((a, b) => (b.last_active || 0) - (a.last_active || 0));
                 uBox.innerHTML = roomsArr.map(r => `
                     <div class="room-card-square" onclick="enterRoom('${r.id}', '${r.name}')">
-                        ${r.uid === myUser.uid ? `<button class="del-room-btn" onclick="event.stopPropagation(); deleteRoom(event, '${r.id}')">🗑️</button>` : ''}
-                        <img src="${r.img}" class="room-card-img"><div class="room-card-info"><span class="room-card-name">${r.name}</span><span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span></div>
+                        ${r.uid === myUser.uid ? `<button class="del-room-btn" onclick="event.stopPropagation(); deleteRoom(event, '${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="white" stroke-width="2.2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg></button>` : ''}
+                        <img src="${r.img}" class="room-card-img">
+                        <div class="room-card-info">
+                            <span class="room-card-name">${r.name}</span>
+                            <span id="count-${r.id}" class="room-card-count">المتواجدين: 0</span>
+                        </div>
                     </div>`).join('');
+                // إصلاح 10: تشغيل trackPresence بعد إنشاء العناصر مباشرةً
                 roomsArr.forEach(r => trackPresence(r.id));
             });
         }
@@ -455,39 +599,53 @@
         function trackPresence(roomId) {
             db.ref(`presence/${roomId}`).on('value', s => {
                 const el = document.getElementById(`count-${roomId}`);
-                if(el) el.innerText = `المتواجدين: ${s.numChildren() || 0}`;
+                if (el) el.innerText = `المتواجدين: ${s.numChildren() || 0}`;
             });
         }
 
         function enterRoom(id, name) {
-            if(currentRoomId) db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
-            currentRoomId = id; document.getElementById('room-title').innerText = name;
+            // إصلاح 11: إيقاف listener الكتابة للغرفة السابقة قبل الانتقال
+            if (currentRoomId) {
+                db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
+                db.ref(`typing/${currentRoomId}`).off();
+                db.ref('chats/' + currentRoomId).off();
+                db.ref(`presence/${currentRoomId}/${myUser.uid}`).remove();
+            }
+            currentRoomId = id;
+            document.getElementById('room-title').innerText = name;
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
             db.ref(`presence/${id}/${myUser.uid}`).set(Date.now());
             db.ref(`presence/${id}/${myUser.uid}`).onDisconnect().remove();
-            loadMessages(); listenTyping();
-            history.pushState({view:'chat'}, "");
+            loadMessages();
+            listenTyping();
+            history.pushState({ view: 'chat' }, "");
         }
 
         function sendMsg() {
             const i = document.getElementById('m-in');
-            if(i.value.trim()) {
+            if (i.value.trim()) {
                 const now = Date.now();
-                db.ref('chats/'+currentRoomId).push({ u: myUser.name, uid: myUser.uid, m: i.value, img: myUser.img, t: now, type: 'text' });
-                if(!currentRoomId.startsWith('pub_') && !currentRoomId.startsWith('private_')) db.ref('rooms_meta/'+currentRoomId).update({ last_active: now });
-                i.value = ""; document.getElementById('sticker-panel').style.display = 'none';
+                db.ref('chats/' + currentRoomId).push({ u: myUser.name, uid: myUser.uid, m: i.value, img: myUser.img, t: now, type: 'text' });
+                // إصلاح 12: تحديث last_active فقط لغرف المستخدمين (rooms_meta) وليس الغرف العامة أو الخاصة
+                if (!currentRoomId.startsWith('pub_') && !currentRoomId.startsWith('private_')) {
+                    db.ref('rooms_meta/' + currentRoomId).update({ last_active: now });
+                }
+                i.value = "";
+                document.getElementById('sticker-panel').style.display = 'none';
                 db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
             }
         }
 
         function sendPhoto(input) {
             const file = input.files[0];
-            if(file) {
+            if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const now = Date.now();
-                    db.ref('chats/'+currentRoomId).push({ u: myUser.name, uid: myUser.uid, m: e.target.result, img: myUser.img, t: now, type: 'img' });
+                    db.ref('chats/' + currentRoomId).push({ u: myUser.name, uid: myUser.uid, m: e.target.result, img: myUser.img, t: now, type: 'img' });
+                    // إصلاح 13: إعادة تعيين قيمة input بعد الإرسال لإتاحة إرسال نفس الصورة مجدداً
+                    input.value = "";
                 };
                 reader.readAsDataURL(file);
             }
@@ -498,11 +656,13 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    if(type === 'login') { document.getElementById('login-preview').src = e.target.result; myUser.img = e.target.result; }
-                    if(type === 'room') roomImgBase64 = e.target.result;
-                    if(type === 'profile') { 
-                        myUser.img = e.target.result; localStorage.setItem('user_img', e.target.result); 
-                        document.getElementById('p-img').src = e.target.result; document.getElementById('header-user-img').src = e.target.result;
+                    if (type === 'login') { document.getElementById('login-preview').src = e.target.result; myUser.img = e.target.result; }
+                    if (type === 'room') roomImgBase64 = e.target.result;
+                    if (type === 'profile') {
+                        myUser.img = e.target.result;
+                        localStorage.setItem('user_img', e.target.result);
+                        document.getElementById('p-img').src = e.target.result;
+                        document.getElementById('header-user-img').src = e.target.result;
                     }
                 };
                 reader.readAsDataURL(file);
@@ -511,21 +671,52 @@
 
         function saveNewRoom() {
             const n = document.getElementById('new-room-name').value;
-            if(n.trim()) {
+            if (n.trim()) {
                 db.ref('rooms_meta').push({ name: n, creator: myUser.name, img: roomImgBase64 || "https://via.placeholder.com/150", uid: myUser.uid, last_active: Date.now() });
-                hideModal('modal-create'); roomImgBase64 = "";
+                hideModal('modal-create');
+                roomImgBase64 = "";
+                // إصلاح 14: مسح حقل الإدخال بعد إنشاء الغرفة
+                document.getElementById('new-room-name').value = "";
             }
         }
 
-        function deleteRoom(e, id) { e.stopPropagation(); if(confirm("حذف الغرفة؟")) { db.ref('rooms_meta/'+id).remove(); db.ref('chats/'+id).remove(); } }
-        function logout() { if(confirm("خروج نهائي؟")) { localStorage.clear(); location.reload(); } }
+        function deleteRoom(e, id) {
+            e.stopPropagation();
+            if (confirm("حذف الغرفة؟")) {
+                db.ref('rooms_meta/' + id).remove();
+                db.ref('chats/' + id).remove();
+            }
+        }
+
+        function logout() {
+            if (confirm("خروج نهائي؟")) {
+                // إصلاح 15: تنظيف presence قبل تسجيل الخروج
+                if (currentRoomId) {
+                    db.ref(`presence/${currentRoomId}/${myUser.uid}`).remove();
+                }
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
         function showModal(id) { document.getElementById(id).style.display = 'flex'; }
         function hideModal(id) { document.getElementById(id).style.display = 'none'; }
-        function goBack() { 
-            if(currentRoomId) db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
-            currentRoomId = ""; document.getElementById('lobby-screen').style.display = 'block'; 
-            document.getElementById('chat-screen').style.display = 'none'; 
+
+        function goBack() {
+            // إصلاح 16: تنظيف جميع listeners عند الرجوع للوبي
+            if (currentRoomId) {
+                db.ref(`typing/${currentRoomId}/${myUser.uid}`).remove();
+                db.ref(`typing/${currentRoomId}`).off();
+                db.ref('chats/' + currentRoomId).off();
+                db.ref(`presence/${currentRoomId}/${myUser.uid}`).remove();
+            }
+            currentRoomId = "";
+            document.getElementById('typing-status').innerText = "";
+            document.getElementById('sticker-panel').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'block';
+            document.getElementById('chat-screen').style.display = 'none';
         }
+
         window.onpopstate = goBack;
     </script>
 </body>
